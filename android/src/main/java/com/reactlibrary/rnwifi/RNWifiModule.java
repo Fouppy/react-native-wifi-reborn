@@ -503,10 +503,13 @@ public class RNWifiModule extends ReactContextBaseJavaModule {
                         .setIsAppInteractionRequired(true) // Optional (Needs location permission)
                         .build();
 
-        final List<WifiNetworkSuggestion> suggestionsList =
-                new ArrayList<WifiNetworkSuggestion> {{
-                    add(suggestion);
-                }};
+        final List<WifiNetworkSuggestion> suggestionsList = new ArrayList<WifiNetworkSuggestion>();
+        suggestionsList.add(suggestion);
+
+//        final List<WifiNetworkSuggestion> suggestionsList =
+//                new ArrayList<WifiNetworkSuggestion> {{
+//                    add(suggestion);
+//                }};
 
         final WifiManager wifiManager =
                 (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
