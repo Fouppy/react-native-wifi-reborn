@@ -519,6 +519,8 @@ public class RNWifiModule extends ReactContextBaseJavaModule {
         if (status != WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS) {
             // do error handling here…
             promise.reject(ConnectErrorCodes.timeoutOccurred.toString(), "Connection timeout");
+        } else {
+            promise.resolve("connected");
         }
 
 //        WifiNetworkSpecifier.Builder wifiNetworkSpecifier = new WifiNetworkSpecifier.Builder()
@@ -535,47 +537,47 @@ public class RNWifiModule extends ReactContextBaseJavaModule {
 //                .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
 //                .build();
 
-        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-       
-        final Handler timeoutHandler = new Handler(Looper.getMainLooper());
-        final Runnable timeoutRunnable = () -> {
-            promise.reject(ConnectErrorCodes.timeoutOccurred.toString(), "Connection timeout");
-            DisconnectCallbackHolder.getInstance().unbindProcessFromNetwork();
-            DisconnectCallbackHolder.getInstance().disconnect();
-        };
-
-        timeoutHandler.postDelayed(timeoutRunnable, timeout);
-
-        ConnectivityManager.NetworkCallback networkCallback = new ConnectivityManager.NetworkCallback() {
-            @Override
-            public void onAvailable(@NonNull Network network) {
-                super.onAvailable(network);
-                timeoutHandler.removeCallbacks(timeoutRunnable);
-                DisconnectCallbackHolder.getInstance().bindProcessToNetwork(network);
-                connectivityManager.setNetworkPreference(ConnectivityManager.DEFAULT_NETWORK_PREFERENCE);
-                if (!pollForValidSSID(3, SSID)) {
-                    promise.reject(ConnectErrorCodes.android10ImmediatelyDroppedConnection.toString(), "Firmware bugs on OnePlus prevent it from connecting on some firmware versions.");
-                    return;
-                }
-                promise.resolve("connected");
-            }
-
-            @Override
-            public void onUnavailable() {
-                super.onUnavailable();
-                timeoutHandler.removeCallbacks(timeoutRunnable);
-                promise.reject(ConnectErrorCodes.didNotFindNetwork.toString(), "Network not found or network request cannot be fulfilled.");
-            }
-
-            @Override
-            public void onLost(@NonNull Network network) {
-                super.onLost(network);
-                DisconnectCallbackHolder.getInstance().unbindProcessFromNetwork();
-                DisconnectCallbackHolder.getInstance().disconnect();
-            }
-        };
-
-        DisconnectCallbackHolder.getInstance().addNetworkCallback(networkCallback, connectivityManager);
+//        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+//
+//        final Handler timeoutHandler = new Handler(Looper.getMainLooper());
+//        final Runnable timeoutRunnable = () -> {
+//            promise.reject(ConnectErrorCodes.timeoutOccurred.toString(), "Connection timeout");
+//            DisconnectCallbackHolder.getInstance().unbindProcessFromNetwork();
+//            DisconnectCallbackHolder.getInstance().disconnect();
+//        };
+//
+//        timeoutHandler.postDelayed(timeoutRunnable, timeout);
+//
+//        ConnectivityManager.NetworkCallback networkCallback = new ConnectivityManager.NetworkCallback() {
+//            @Override
+//            public void onAvailable(@NonNull Network network) {
+//                super.onAvailable(network);
+//                timeoutHandler.removeCallbacks(timeoutRunnable);
+//                DisconnectCallbackHolder.getInstance().bindProcessToNetwork(network);
+//                connectivityManager.setNetworkPreference(ConnectivityManager.DEFAULT_NETWORK_PREFERENCE);
+//                if (!pollForValidSSID(3, SSID)) {
+//                    promise.reject(ConnectErrorCodes.android10ImmediatelyDroppedConnection.toString(), "Firmware bugs on OnePlus prevent it from connecting on some firmware versions.");
+//                    return;
+//                }
+//                promise.resolve("connected");
+//            }
+//
+//            @Override
+//            public void onUnavailable() {
+//                super.onUnavailable();
+//                timeoutHandler.removeCallbacks(timeoutRunnable);
+//                promise.reject(ConnectErrorCodes.didNotFindNetwork.toString(), "Network not found or network request cannot be fulfilled.");
+//            }
+//
+//            @Override
+//            public void onLost(@NonNull Network network) {
+//                super.onLost(network);
+//                DisconnectCallbackHolder.getInstance().unbindProcessFromNetwork();
+//                DisconnectCallbackHolder.getInstance().disconnect();
+//            }
+//        };
+//
+//        DisconnectCallbackHolder.getInstance().addNetworkCallback(networkCallback, connectivityManager);
 //        DisconnectCallbackHolder.getInstance().requestNetwork(nr);
     }
 
