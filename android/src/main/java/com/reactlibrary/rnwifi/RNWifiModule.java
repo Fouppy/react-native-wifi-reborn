@@ -18,6 +18,7 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiNetworkSpecifier;
+import android.net.wifi.WifiNetworkSuggestion;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -51,6 +52,7 @@ import com.thanosfisherman.wifiutils.wifiDisconnect.DisconnectionSuccessListener
 import com.thanosfisherman.wifiutils.wifiRemove.RemoveErrorCode;
 import com.thanosfisherman.wifiutils.wifiRemove.RemoveSuccessListener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RNWifiModule extends ReactContextBaseJavaModule {
@@ -494,19 +496,41 @@ public class RNWifiModule extends ReactContextBaseJavaModule {
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     private void connectAndroidQ(@NonNull final String SSID, @NonNull final String password, final boolean isHidden, final int timeout, final Promise promise) {
-        WifiNetworkSpecifier.Builder wifiNetworkSpecifier = new WifiNetworkSpecifier.Builder()
-                .setIsHiddenSsid(isHidden)
-                .setSsid(SSID);
+        final WifiNetworkSuggestion suggestion =
+                new WifiNetworkSuggestion.Builder()
+                        .setSsid(SSID)
+                        .setWpa2Passphrase(password)
+                        .setIsAppInteractionRequired(true) // Optional (Needs location permission)
+                        .build();
 
-        if (!isNullOrEmpty(password)) {
-            wifiNetworkSpecifier.setWpa2Passphrase(password);
+        final List<WifiNetworkSuggestion> suggestionsList =
+                new ArrayList<WifiNetworkSuggestion> {{
+                    add(suggestion);
+                }};
+
+        final WifiManager wifiManager =
+                (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+
+        final int status = wifiManager.addNetworkSuggestions(suggestionsList);
+
+        if (status != WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS) {
+            // do error handling here…
+            promise.reject(ConnectErrorCodes.timeoutOccurred.toString(), "Connection timeout");
         }
 
-        NetworkRequest nr = new NetworkRequest.Builder()
-                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-                .setNetworkSpecifier(wifiNetworkSpecifier.build())
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
-                .build();
+//        WifiNetworkSpecifier.Builder wifiNetworkSpecifier = new WifiNetworkSpecifier.Builder()
+//                .setIsHiddenSsid(isHidden)
+//                .setSsid(SSID);
+//
+//        if (!isNullOrEmpty(password)) {
+//            wifiNetworkSpecifier.setWpa2Passphrase(password);
+//        }
+//
+//        NetworkRequest nr = new NetworkRequest.Builder()
+//                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+//                .setNetworkSpecifier(wifiNetworkSpecifier.build())
+//                .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
+//                .build();
 
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
        
@@ -549,7 +573,7 @@ public class RNWifiModule extends ReactContextBaseJavaModule {
         };
 
         DisconnectCallbackHolder.getInstance().addNetworkCallback(networkCallback, connectivityManager);
-        DisconnectCallbackHolder.getInstance().requestNetwork(nr);
+//        DisconnectCallbackHolder.getInstance().requestNetwork(nr);
     }
 
     private static String longToIP(int longIp) {
