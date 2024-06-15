@@ -225,7 +225,7 @@ declare module 'react-native-wifi-reborn' {
         couldNotGetConnectivityManager = 'couldNotGetConnectivityManager',
     }
 
-    export function disconnect(): Promise<boolean>;
+    export function disconnect(SSID: string, password: string): Promise<boolean>;
 
     /**
      * Returns the BSSID (basic service set identifier) of the currently connected WiFi network.
