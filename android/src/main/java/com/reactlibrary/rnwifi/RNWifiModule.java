@@ -388,44 +388,72 @@ public class RNWifiModule extends ReactContextBaseJavaModule {
     /**
      * Disconnect currently connected WiFi network.
      */
+    // @ReactMethod
+    // public void disconnect(final Promise promise) {
+    //     final int timeout = TIMEOUT_REMOVE_MILLIS;
+    //     final Handler timeoutHandler = new Handler(Looper.getMainLooper());
+    //     final Runnable timeoutRunnable = () -> {
+    //         promise.reject(ConnectErrorCodes.timeoutOccurred.toString(), "Connection timeout");
+    //         if (isAndroidTenOrLater()) {
+    //             DisconnectCallbackHolder.getInstance().unbindProcessFromNetwork();
+    //             DisconnectCallbackHolder.getInstance().disconnect();
+    //         }
+    //     };
+
+    //     timeoutHandler.postDelayed(timeoutRunnable, timeout);
+
+    //     WifiUtils.withContext(this.context).disconnect(new DisconnectionSuccessListener() {
+    //         @Override
+    //         public void success() {
+    //             timeoutHandler.removeCallbacks(timeoutRunnable);
+    //             promise.resolve(true);
+    //         }
+
+    //         @Override
+    //         public void failed(@NonNull DisconnectionErrorCode errorCode) {
+    //             timeoutHandler.removeCallbacks(timeoutRunnable);
+    //             switch (errorCode) {
+    //                 case COULD_NOT_GET_WIFI_MANAGER: {
+    //                     promise.reject(DisconnectErrorCodes.couldNotGetWifiManager.toString(), "Could not get WifiManager.");
+    //                 }
+    //                 case COULD_NOT_GET_CONNECTIVITY_MANAGER: {
+    //                     promise.reject(DisconnectErrorCodes.couldNotGetConnectivityManager.toString(), "Could not get Connectivity Manager.");
+    //                 }
+    //                 default:
+    //                 case COULD_NOT_DISCONNECT: {
+    //                     promise.resolve(false);
+    //                 }
+    //             }
+    //         }
+    //     });
+    // }
+
+    /**
+     * Disconnect currently connected WiFi network.
+     */
     @ReactMethod
-    public void disconnect(final Promise promise) {
-        final int timeout = TIMEOUT_REMOVE_MILLIS;
-        final Handler timeoutHandler = new Handler(Looper.getMainLooper());
-        final Runnable timeoutRunnable = () -> {
-            promise.reject(ConnectErrorCodes.timeoutOccurred.toString(), "Connection timeout");
-            if (isAndroidTenOrLater()) {
-                DisconnectCallbackHolder.getInstance().unbindProcessFromNetwork();
-                DisconnectCallbackHolder.getInstance().disconnect();
-            }
-        };
+    public void disconnect(final String SSID, final String password, final Promise promise) {
+        final WifiNetworkSuggestion suggestion =
+          new WifiNetworkSuggestion.Builder()
+            .setSsid(SSID)
+            .setWpa2Passphrase(password)
+            .setIsAppInteractionRequired(true) // Optional (Needs location permission)
+            .build();
 
-        timeoutHandler.postDelayed(timeoutRunnable, timeout);
+        final List<WifiNetworkSuggestion> suggestionsList = new ArrayList<WifiNetworkSuggestion>();
+        suggestionsList.add(suggestion);
 
-        WifiUtils.withContext(this.context).disconnect(new DisconnectionSuccessListener() {
-            @Override
-            public void success() {
-                timeoutHandler.removeCallbacks(timeoutRunnable);
-                promise.resolve(true);
-            }
+        final WifiManager wifiManager =
+                (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 
-            @Override
-            public void failed(@NonNull DisconnectionErrorCode errorCode) {
-                timeoutHandler.removeCallbacks(timeoutRunnable);
-                switch (errorCode) {
-                    case COULD_NOT_GET_WIFI_MANAGER: {
-                        promise.reject(DisconnectErrorCodes.couldNotGetWifiManager.toString(), "Could not get WifiManager.");
-                    }
-                    case COULD_NOT_GET_CONNECTIVITY_MANAGER: {
-                        promise.reject(DisconnectErrorCodes.couldNotGetConnectivityManager.toString(), "Could not get Connectivity Manager.");
-                    }
-                    default:
-                    case COULD_NOT_DISCONNECT: {
-                        promise.resolve(false);
-                    }
-                }
-            }
-        });
+        final int status = wifiManager.removeNetworkSuggestions(suggestionsList);
+
+        if (status != WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS) {
+            // do error handling here…
+            promise.resolve(false);
+        } else {
+            promise.resolve(true);
+        }
     }
 
     /**
